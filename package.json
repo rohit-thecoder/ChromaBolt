@@ -1,7 +1,7 @@
 {
   "name": "chromabolt",
   "version": "1.0.0",
-  "main": "expo-router/entry",
+  "main": "expo/AppEntry",
   "dependencies": {
     "@expo/ui": "~58.0.29",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -45,3 +45,4 @@
   },
   "private": true
 }
+
