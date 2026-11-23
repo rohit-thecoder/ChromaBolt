@@ -10,11 +10,22 @@ export const palette = {
   offWhite: '#F8FAFC',
 } as const;
 
+export const nutFinishes = {
+  Crimson: '#C43B4B',
+  Cobalt: '#2563B8',
+  Emerald: '#168A63',
+  Amber: '#D97706',
+  Violet: '#7C3AED',
+  Coral: '#E35D48',
+  Cyan: '#0891B2',
+} as const;
+
 export type PaletteColor = (typeof palette)[keyof typeof palette];
 export type PaletteColorName = keyof typeof palette;
 
 export const theme = {
   colors: palette,
+  nutFinishes,
   spacing: {
     xs: 4,
     sm: 8,
@@ -31,3 +42,4 @@ export const theme = {
 } as const;
 
 export type AppTheme = typeof theme;
+
