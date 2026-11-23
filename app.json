@@ -4,11 +4,18 @@
     "slug": "ChromaBolt",
     "version": "1.0.0",
     "orientation": "portrait",
+    "androidStatusBar": {
+      "backgroundColor": "#1E242B",
+      "barStyle": "light-content"
+    },
     "icon": "./assets/images/icon.png",
     "scheme": "chromabolt",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "UIStatusBarStyle": "UIStatusBarStyleLightContent"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -40,3 +47,4 @@
     }
   }
 }
+
