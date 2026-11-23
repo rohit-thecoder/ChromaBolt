@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
@@ -19,6 +20,7 @@ export function StageCompleteScreen({
   onNext,
   stageNumber,
 }: StageCompleteScreenProps): React.JSX.Element {
+  const { height } = useWindowDimensions();
   const stampScale = useSharedValue(1.7);
   const stampRotation = useSharedValue(-8);
 
@@ -33,8 +35,8 @@ export function StageCompleteScreen({
   }));
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
+    <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={styles.container}>
+      <View style={[styles.content, { paddingVertical: Math.max(20, height * 0.04) }]}>
         <Text style={styles.eyebrow}>BLUEPRINT #{stageNumber.toString().padStart(3, '0')}</Text>
         <Animated.View style={[styles.stamp, stampStyle]}>
           <Text style={styles.stampText}>BLUEPRINT{`\n`}VERIFIED</Text>
@@ -54,7 +56,7 @@ export function StageCompleteScreen({
         </Pressable>
       </View>
       <WorkshopBannerAd />
-    </View>
+    </SafeAreaView>
   );
 }
 
