@@ -125,6 +125,7 @@ export function BoltAssembly({
   const boltSize = 58;
   const liftedNutIds = new Set(getLiftedNuts(bolt).map((nut) => nut.id));
   const capacity = bolt.capacity ?? 4;
+  const isCompleted = bolt.nuts.length === capacity && bolt.nuts.every((nut) => nut.color === bolt.nuts[0]?.color);
 
   useEffect(() => {
     if (invalidSignal > 0) {
@@ -176,6 +177,7 @@ export function BoltAssembly({
         accessibilityHint="Select a source bolt or a valid destination bolt"
         accessibilityLabel={`Bolt with ${bolt.nuts.length} nuts`}
         accessibilityRole="button"
+        disabled={isCompleted}
         onPress={handlePress}
         style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}>
         <View
@@ -183,17 +185,21 @@ export function BoltAssembly({
             styles.assembly,
             isSelected && styles.selectedAssembly,
             isValidDestination && styles.destinationAssembly,
+            isCompleted && styles.completedAssembly,
           ]}>
           <Svg height={100} viewBox={`0 0 ${boltSize} 100`} width={boltSize}>
             <Rect fill={palette.workbenchSurface} height="100" width={boltSize} x="0" y="0" />
             <Rect fill={palette.blueprintGrid} height="14" rx="3" width={boltSize - 4} x="2" y="83" />
             <Rect fill={palette.steel} height="4" rx="2" width={boltSize - 12} x="6" y="86" />
-            <Rect fill={palette.steel} height="64" rx="4" width="7" x={boltSize / 2 - 3.5} y="19" />
+            <Rect fill="#64748B" height="64" rx="4" width="8" x={boltSize / 2 - 4} y="19" />
+            <Line stroke="#CBD5E1" strokeWidth="1" x1={boltSize / 2 - 2} x2={boltSize / 2 - 2} y1="21" y2="80" />
             {[31, 40, 49, 58, 67, 76].map((y) => (
-              <Line key={y} stroke={palette.workbenchSurface} strokeWidth="1" x1={boltSize / 2 - 3} x2={boltSize / 2 + 3} y1={y} y2={y} />
+              <Path d={`M ${boltSize / 2 - 4} ${y + 2} L ${boltSize / 2 + 4} ${y - 2}`} key={y} stroke={palette.workbenchSurface} strokeWidth="1.2" />
             ))}
-            <Circle cx={boltSize / 2} cy="16" fill={palette.steel} r="5" />
+            <Polygon fill={palette.steel} points={`${boltSize / 2 - 6},13 ${boltSize / 2 - 3},9 ${boltSize / 2 + 3},9 ${boltSize / 2 + 6},13 ${boltSize / 2 + 3},17 ${boltSize / 2 - 3},17`} />
+            <Circle cx={boltSize / 2} cy="13" fill={palette.workbenchSurface} r="2.5" />
             {bolt.isSpare && <Circle cx={boltSize / 2} cy="16" fill={palette.brassAccent} r="2" />}
+            {isCompleted && <><Circle cx={boltSize / 2} cy="10" fill="none" r="10" stroke={palette.brassAccent} strokeOpacity="0.65" strokeWidth="1.5" /><Polygon fill={palette.brassAccent} points={`${boltSize / 2 - 6},6 ${boltSize / 2 + 6},6 ${boltSize / 2 + 8},11 ${boltSize / 2 + 6},16 ${boltSize / 2 - 6},16 ${boltSize / 2 - 8},11`} /></>}
           </Svg>
           {bolt.nuts.map((nut, index) => (
             <NutVisual
@@ -257,6 +263,12 @@ const styles = StyleSheet.create({
   selectedAssembly: {
     backgroundColor: palette.blueprintGrid,
     borderColor: palette.offWhite,
+  },
+  completedAssembly: {
+    borderColor: palette.brassAccent,
+    shadowColor: palette.brassAccent,
+    shadowOpacity: 0.7,
+    shadowRadius: 10,
   },
   wrapper: {
     alignItems: 'center',
