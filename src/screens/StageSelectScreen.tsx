@@ -1,4 +1,5 @@
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { WorkshopBannerAd } from '@/services/adService';
 import { palette } from '@/theme/theme';
@@ -24,8 +25,9 @@ export function StageSelectScreen({
   onBack,
   onSelectStage,
 }: StageSelectScreenProps): React.JSX.Element {
+  const { width } = useWindowDimensions();
   return (
-    <View style={styles.container}>
+    <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={onBack} style={styles.backButton}>
           <Text style={styles.backText}>‹</Text>
@@ -36,7 +38,7 @@ export function StageSelectScreen({
         </View>
       </View>
       <FlatList
-        contentContainerStyle={styles.grid}
+        contentContainerStyle={[styles.grid, { paddingHorizontal: Math.max(12, width * 0.035) }]}
         data={STAGES}
         keyExtractor={(stage) => stage.toString()}
         numColumns={4}
@@ -64,7 +66,7 @@ export function StageSelectScreen({
         showsVerticalScrollIndicator={false}
       />
       <WorkshopBannerAd />
-    </View>
+    </SafeAreaView>
   );
 }
 
