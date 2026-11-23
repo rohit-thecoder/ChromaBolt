@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 
 import { BlueprintBackground } from '@/components/BlueprintBackground';
 import { BoltAssembly, type BoltFeedback } from '@/components/BoltAssembly';
@@ -14,11 +13,10 @@ import {
   undoLastMove,
 } from '@/engine/gameLogic';
 import { generateLevel } from '@/engine/levelGenerator';
-import { adService } from '@/services/adService';
+import { adService, WorkshopAdModal, type RewardType } from '@/services/adService';
 import { palette } from '@/theme/theme';
 import type { Bolt, PuzzleState, SkinId } from '@/types/game';
 
-const INITIAL_STAGE = 1;
 const MAX_UNDO_CREDITS = 3;
 
 const createStageState = (stageNumber: number): PuzzleState =>
@@ -26,17 +24,38 @@ const createStageState = (stageNumber: number): PuzzleState =>
 
 const stageLabel = (stageNumber: number): string => stageNumber.toString().padStart(3, '0');
 
-export default function GameScreen(): React.JSX.Element {
+interface GameScreenProps {
+  hapticsEnabled: boolean;
+  onBack: () => void;
+  onComplete: (movesUsed: number) => void;
+  skin: SkinId;
+  stageNumber: number;
+}
+
+export default function GameScreen({
+  hapticsEnabled,
+  onBack,
+  onComplete,
+  skin,
+  stageNumber,
+}: GameScreenProps): React.JSX.Element {
   const { width } = useWindowDimensions();
-  const [stageNumber, setStageNumber] = useState(INITIAL_STAGE);
   const [puzzleState, setPuzzleState] = useState<PuzzleState>(() =>
-    createStageState(INITIAL_STAGE),
+    createStageState(stageNumber),
   );
   const [selectedBoltId, setSelectedBoltId] = useState<string | null>(null);
   const [undoCredits, setUndoCredits] = useState(MAX_UNDO_CREDITS);
   const [spareUsed, setSpareUsed] = useState(false);
   const [invalidSignals, setInvalidSignals] = useState<Record<string, number>>({});
-  const skin: SkinId = 'hex';
+  const [simulatedReward, setSimulatedReward] = useState<RewardType | null>(null);
+
+  useEffect(() => {
+    setPuzzleState(createStageState(stageNumber));
+    setSelectedBoltId(null);
+    setUndoCredits(MAX_UNDO_CREDITS);
+    setSpareUsed(false);
+    setInvalidSignals({});
+  }, [stageNumber]);
 
   const validDestinationIds = useMemo(() => {
     if (selectedBoltId === null) {
@@ -113,6 +132,9 @@ export default function GameScreen(): React.JSX.Element {
       if (reward.rewarded) {
         setUndoCredits(MAX_UNDO_CREDITS);
       }
+      if (reward.source === 'mock') {
+        setSimulatedReward(reward.rewardType);
+      }
       return;
     }
 
@@ -132,6 +154,9 @@ export default function GameScreen(): React.JSX.Element {
       if (reward.rewarded) {
         setUndoCredits(MAX_UNDO_CREDITS);
       }
+      if (reward.source === 'mock') {
+        setSimulatedReward(reward.rewardType);
+      }
     }
   };
 
@@ -144,6 +169,10 @@ export default function GameScreen(): React.JSX.Element {
 
     if (!reward.rewarded) {
       return;
+    }
+
+    if (reward.source === 'mock') {
+      setSimulatedReward(reward.rewardType);
     }
 
     const capacity = stageNumber % 2 === 0 ? 1 : 4;
@@ -161,21 +190,11 @@ export default function GameScreen(): React.JSX.Element {
     setSpareUsed(true);
   };
 
-  const advanceStage = (): void => {
-    const nextStage = stageNumber + 1;
-    setStageNumber(nextStage);
-    setPuzzleState(createStageState(nextStage));
-    setSelectedBoltId(null);
-    setUndoCredits(MAX_UNDO_CREDITS);
-    setSpareUsed(false);
-    setInvalidSignals({});
-  };
-
   return (
     <BlueprintBackground>
       <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
         <View style={styles.topBar}>
-          <Pressable onPress={() => router.back()} style={styles.iconButton}>
+          <Pressable onPress={onBack} style={styles.iconButton}>
             <Text style={styles.iconButtonText}>‹</Text>
           </Pressable>
           <View style={styles.stageBadge}>
@@ -193,7 +212,7 @@ export default function GameScreen(): React.JSX.Element {
               <View key={bolt.id} style={[styles.boltCell, { width: cellWidth }]}>
                 <BoltAssembly
                   bolt={bolt}
-                  hapticsEnabled
+                  hapticsEnabled={hapticsEnabled}
                   invalidSignal={invalidSignals[bolt.id] ?? 0}
                   isSelected={selectedBoltId === bolt.id}
                   isValidDestination={validDestinationIds.has(bolt.id)}
@@ -229,10 +248,22 @@ export default function GameScreen(): React.JSX.Element {
         </View>
 
         {isPuzzleWon(puzzleState.bolts) && (
-          <Pressable onPress={advanceStage} style={styles.nextStageButton}>
-            <Text style={styles.nextStageText}>NEXT BLUEPRINT</Text>
+          <Pressable
+            onPress={() => onComplete(puzzleState.moveHistory.length)}
+            style={styles.nextStageButton}>
+            <Text style={styles.nextStageText}>VERIFY BLUEPRINT</Text>
           </Pressable>
         )}
+        <WorkshopAdModal
+          message={
+            simulatedReward === 'spareBolt'
+              ? 'A sponsored tool grant has added an auxiliary brass bolt.'
+              : 'A sponsored calibration grant has refilled all three undo credits.'
+          }
+          onClose={() => setSimulatedReward(null)}
+          title={simulatedReward === 'spareBolt' ? 'AUXILIARY BOLT GRANTED' : 'UNDO CREDITS REFILLED'}
+          visible={simulatedReward !== null}
+        />
       </SafeAreaView>
     </BlueprintBackground>
   );
