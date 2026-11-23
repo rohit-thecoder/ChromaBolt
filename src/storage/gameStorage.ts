@@ -7,8 +7,8 @@ const GAME_STORAGE_KEY = '@chromabolt/game-state';
 export const DEFAULT_GAME_STATE: Readonly<GameState> = {
   currentStage: 1,
   highestUnlockedStage: 1,
-  coins: 0,
-  unlockedSkins: ['hex', 'gear', 'washer'],
+  coins: 100,
+  unlockedSkins: ['hex'],
   equippedSkin: 'hex',
   soundEnabled: true,
   hapticsEnabled: true,
@@ -110,3 +110,4 @@ export const gameStorage = {
   update: updateGameState,
   reset: resetGameState,
 };
+
