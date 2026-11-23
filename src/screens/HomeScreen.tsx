@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Switch, Text, View, useWindowDimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -68,6 +69,7 @@ export function HomeScreen({
   onOpenStageSelect,
   onUpdateGameState,
 }: HomeScreenProps): React.JSX.Element {
+  const { width } = useWindowDimensions();
   const [skinsVisible, setSkinsVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
 
@@ -92,7 +94,8 @@ export function HomeScreen({
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={styles.safeArea}>
+    <View style={[styles.container, { paddingHorizontal: Math.max(18, width * 0.06) }]}>
       <View style={styles.headerRow}>
         <View>
           <Text style={styles.eyebrow}>CHROMABOLT</Text>
@@ -178,6 +181,7 @@ export function HomeScreen({
         </View>
       </Modal>
     </View>
+    </SafeAreaView>
   );
 }
 
@@ -187,6 +191,7 @@ const styles = StyleSheet.create({
   closeButtonText: { color: palette.steel, fontSize: 11, fontWeight: '900', letterSpacing: 1 },
   coinsText: { color: palette.brassAccent, fontSize: 12, fontWeight: '900', letterSpacing: 1, marginBottom: 24 },
   container: { alignItems: 'center', flex: 1, padding: 22 },
+  safeArea: { flex: 1 },
   eyebrow: { color: palette.steel, fontSize: 10, fontWeight: '800', letterSpacing: 2 },
   gearButton: { alignItems: 'center', borderColor: palette.steel, borderRadius: 19, borderWidth: 1, height: 38, justifyContent: 'center', width: 38 },
   gearText: { color: palette.offWhite, fontSize: 20 },
