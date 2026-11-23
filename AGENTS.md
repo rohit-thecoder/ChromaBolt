@@ -1,41 +1,40 @@
-This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
+# ChromaBolt: Workshop Sort — Engineering Rules
 
-## Expo has changed — do not trust your training data
+ChromaBolt is a portrait-only React Native game built with Expo and TypeScript. These rules are mandatory for every change.
 
-Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
+## Architecture
 
-1. Read the major version of the `expo` package in `package.json`.
-2. Fetch the matching versioned docs: `https://docs.expo.dev/versions/v<major>.0.0/`
-3. For anything else, fetch https://docs.expo.dev/llms.txt — an index of all Expo docs with corrections to common LLM misconceptions. Follow its links to the specific page you need; never answer from memory.
+- Keep routes in `src/app/`. Put game rules in `src/engine/`, screens in `src/screens/`, reusable UI in `src/components/`, visual tokens in `src/theme/`, integrations in `src/services/`, persistence in `src/storage/`, and shared domain definitions in `src/types/`.
+- Keep UI declarative and thin. Screens coordinate presentation; game rules belong in the engine and I/O belongs in services or storage.
+- The app must remain portrait-only. Do not introduce landscape layouts, orientation overrides, or rotation-dependent interactions.
 
-## Commands
+## TypeScript
 
-Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
+- Use strict TypeScript throughout. `any`, implicit `any`, `@ts-ignore`, and untyped external data are prohibited.
+- Model API, storage, navigation, and game-domain data with explicit types. Treat parsed JSON and other external values as `unknown` until validated.
 
-```bash
-npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
-npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
-npx expo-doctor             # diagnose dependency and config issues
-npx expo install --fix      # fix incompatible package versions
-```
+## Visual System
 
-Run lint and typecheck before declaring any task done.
+Only use the named palette tokens exported from `src/theme/theme.ts`:
 
-## Navigation & Routing
+| Token | Value |
+| --- | --- |
+| Workbench Surface | `#1E242B` |
+| Blueprint Grid | `#2A323C` |
+| Brass Accent | `#EAB308` |
+| Steel | `#94A3B8` |
+| Off-White | `#F8FAFC` |
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
+- Do not introduce ad-hoc color literals in components or screens.
+- Every animation must use `react-native-reanimated` and run on the native/UI driver at 60fps. Do not use `Animated`, `LayoutAnimation`, CSS animations, or JS-thread timer loops for motion.
 
-## Building with EAS
+## Ads and Persistence
 
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
-Docs: https://docs.expo.dev/eas/index.md
+- UI screens and components must never import native AdMob modules directly. All ad interactions go through `src/services/adService.ts`.
+- `adService` must be safe in Expo Go: native ad availability is detected inside the service and unavailable rewards resolve to a typed mock reward.
+- Use `@react-native-async-storage/async-storage` only through `src/storage/gameStorage.ts`. Do not access AsyncStorage from screens, components, the engine, or other services.
+- Persist the complete game state through `gameStorage`: `currentStage`, `highestUnlockedStage`, `coins`, `unlockedSkins`, `equippedSkin`, `soundEnabled`, and `hapticsEnabled`.
 
-## Rules
+## Validation
 
-- If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
-- Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+- Before finishing every task, run `npx tsc --noEmit` and resolve every TypeScript error.
