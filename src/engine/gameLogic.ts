@@ -28,6 +28,8 @@ const clonePuzzleState = (state: PuzzleState): PuzzleState => ({
 const getBoltIndex = (bolts: readonly Bolt[], boltId: string): number =>
   bolts.findIndex((bolt) => bolt.id === boltId);
 
+export const getBoltCapacity = (bolt: Bolt): number => bolt.capacity ?? MAX_CAPACITY;
+
 /** Returns the top nut plus every matching nut immediately below it. */
 export const getLiftedNuts = (sourceBolt: Bolt): Nut[] => {
   const topNut = sourceBolt.nuts.at(-1);
@@ -61,7 +63,7 @@ export const canPlaceNuts = (destinationBolt: Bolt, liftedNuts: readonly Nut[]):
     return false;
   }
 
-  if (MAX_CAPACITY - destinationBolt.nuts.length < liftedNuts.length) {
+  if (getBoltCapacity(destinationBolt) - destinationBolt.nuts.length < liftedNuts.length) {
     return false;
   }
 
@@ -186,7 +188,7 @@ export const undoLastMove = (state: PuzzleState): MoveResult => {
 
 export const isPuzzleWon = (bolts: readonly Bolt[]): boolean =>
   bolts.every((bolt) => {
-    if (bolt.nuts.length === 0) {
+    if (bolt.nuts.length === 0 || (bolt.isSpare && bolt.capacity === 1)) {
       return true;
     }
 
