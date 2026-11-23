@@ -48,6 +48,8 @@ export default function GameScreen({
   const [spareUsed, setSpareUsed] = useState(false);
   const [invalidSignals, setInvalidSignals] = useState<Record<string, number>>({});
   const [simulatedReward, setSimulatedReward] = useState<RewardType | null>(null);
+  const [combo, setCombo] = useState(0);
+  const [praise, setPraise] = useState<string | null>(null);
 
   useEffect(() => {
     setPuzzleState(createStageState(stageNumber));
@@ -55,6 +57,8 @@ export default function GameScreen({
     setUndoCredits(MAX_UNDO_CREDITS);
     setSpareUsed(false);
     setInvalidSignals({});
+    setCombo(0);
+    setPraise(null);
   }, [stageNumber]);
 
   const validDestinationIds = useMemo(() => {
@@ -68,6 +72,11 @@ export default function GameScreen({
   }, [puzzleState.bolts, selectedBoltId]);
   const columnCount = Math.min(6, Math.max(3, Math.ceil(puzzleState.bolts.length / 2)));
   const cellWidth = Math.floor((width - 28) / columnCount);
+  const solvedBoltCount = puzzleState.bolts.filter(
+    (bolt) => bolt.nuts.length === 4 && bolt.nuts.every((nut) => nut.color === bolt.nuts[0]?.color),
+  ).length;
+  const occupiedBoltCount = puzzleState.bolts.filter((bolt) => bolt.nuts.length > 0).length;
+  const finalStretch = occupiedBoltCount > 0 && (occupiedBoltCount - solvedBoltCount <= 1 || solvedBoltCount / occupiedBoltCount >= 0.85);
 
   const triggerInvalid = (boltId: string): void => {
     setInvalidSignals((signals) => ({
@@ -115,6 +124,9 @@ export default function GameScreen({
 
     setPuzzleState(move.state);
     setSelectedBoltId(null);
+    const nextCombo = combo + 1;
+    setCombo(nextCombo);
+    setPraise(nextCombo >= 4 ? 'MASTERWORK!' : nextCombo === 3 ? 'CLEAN!' : nextCombo === 2 ? 'PRECISION!' : '+10');
     return 'drop';
   };
 
@@ -124,6 +136,8 @@ export default function GameScreen({
     setUndoCredits(MAX_UNDO_CREDITS);
     setSpareUsed(false);
     setInvalidSignals({});
+    setCombo(0);
+    setPraise(null);
   };
 
   const useUndo = async (): Promise<void> => {
@@ -148,6 +162,7 @@ export default function GameScreen({
     setPuzzleState(undoneMove.state);
     setSelectedBoltId(null);
     setUndoCredits(remainingCredits);
+    setCombo(0);
 
     if (remainingCredits === 0) {
       const reward = await adService.requestReward('undoRefill');
@@ -192,7 +207,7 @@ export default function GameScreen({
 
   return (
     <BlueprintBackground>
-      <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
+      <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={styles.safeArea}>
         <View style={styles.topBar}>
           <Pressable onPress={onBack} style={styles.iconButton}>
             <Text style={styles.iconButtonText}>‹</Text>
@@ -205,6 +220,10 @@ export default function GameScreen({
             <Text style={styles.restartText}>RESTART</Text>
           </Pressable>
         </View>
+        {(combo > 1 || finalStretch) && <View style={[styles.telemetryRow, finalStretch && styles.finalStretch]}>
+          {combo > 1 && <Text style={styles.comboText}>{combo >= 4 ? 'OVERDRIVE!' : `x${combo} COMBO`}</Text>}
+          {finalStretch && <Text style={styles.finalText}>FINAL STRETCH</Text>}
+        </View>}
 
         <View style={styles.playfield}>
           <View style={styles.grid}>
@@ -225,6 +244,7 @@ export default function GameScreen({
           <Text style={styles.playfieldCaption}>
             {selectedBoltId === null ? 'SELECT A BOLT' : 'THREAD ONTO A HIGHLIGHTED BOLT'}
           </Text>
+          {praise !== null && <Text style={styles.praise}>{praise}</Text>}
         </View>
 
         <View style={styles.actionBar}>
@@ -402,5 +422,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingTop: 4,
   },
+  telemetryRow: { alignItems: 'center', flexDirection: 'row', gap: 8, justifyContent: 'center', marginTop: 8 },
+  comboText: { color: palette.offWhite, fontSize: 10, fontWeight: '900', letterSpacing: 1.1 },
+  finalStretch: { borderColor: palette.brassAccent, borderRadius: 8, borderWidth: 1, marginHorizontal: 80, paddingVertical: 4 },
+  finalText: { color: palette.brassAccent, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
+  praise: { color: palette.brassAccent, fontSize: 13, fontWeight: '900', letterSpacing: 1.2, marginTop: 9, textAlign: 'center' },
 });
 
