@@ -26,6 +26,7 @@ export interface Bolt {
   id: string;
   nuts: Nut[];
   isSpare?: boolean;
+  capacity?: 1 | typeof MAX_CAPACITY;
 }
 
 export interface LiftedNuts {
